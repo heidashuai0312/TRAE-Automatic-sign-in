@@ -269,11 +269,14 @@ def main():
         print("错误：未检测到任何可用的签到凭据（TRAE_SESSION 或 WORKBUDDY_TOKEN）")
         sys.exit(1)
 
-    # 可选云端随机延迟（例如在 0 ~ RANDOM_DELAY_MAX 秒之间随机等待，防整点风控）
+    # 可选云端随机延迟（防整点风控）：
+    # 手动触发 (workflow_dispatch) 或本地直接运行时不等待，秒级出结果；仅定时调度 (schedule) 时启用随机延迟
+    event_name = os.environ.get("GITHUB_EVENT_NAME", "").strip()
+    is_schedule = (event_name == "schedule")
     random_delay_max = int(os.environ.get("RANDOM_DELAY_MAX", "0") or 0)
-    if random_delay_max > 0:
-        delay_sec = random.randint(1, random_delay_max)
-        print(f"[云端防风控] 随机等待 {delay_sec} 秒后再开始签到…")
+    if is_schedule and random_delay_max > 0:
+        delay_sec = random.randint(5, random_delay_max)
+        print(f"[云端防风控] 定时调度触发，随机等待 {delay_sec} 秒后再开始签到…")
         time.sleep(delay_sec)
 
     webhook = os.environ.get("FEISHU_WEBHOOK", "").strip()
